@@ -75,6 +75,32 @@ def rasterize_polyline(pts,R=512):
             iy = min(R-1,max(0,int(y*R)))
             grid[iy,ix] = 1
     return grid
+    
+# ----------- 新增 Cantor-like 1D 生成函数 -----------
+def cantor_line(points, iterations):
+    """
+    points: np.array([[x0,y0],[x1,y1]])
+    iterations: int, 迭代次数
+    返回: np.array of points
+    """
+    segs = [points]
+    for _ in range(iterations):
+        new_segs = []
+        for seg in segs:
+            x0, y0 = seg[0]
+            x1, y1 = seg[1]
+            dx = (x1 - x0)/3
+            # 左端段
+            new_segs.append(np.array([[x0, y0], [x0+dx, y0]]))
+            # 右端段
+            new_segs.append(np.array([[x0+2*dx, y0], [x1, y1]]))
+        segs = new_segs
+    # 合并所有点
+    pts = [segs[0][0]]
+    for seg in segs:
+        pts.append(seg[1])
+    return np.array(pts)
+
 
 def box_counting_dimension(grid, ks=[2,4,8,16,32,64]):
     N = grid.shape[0]
@@ -127,10 +153,15 @@ if func_choice=="Fractal Generator":
     if 'gen_button' in locals() and gen_button:
         if preset=="Custom 2-step":
             steps = [(0.0, ratio), (angle, 1.0-ratio)]
+            gen = make_generator(steps)
+            pts = build_fractal(gen, iters)
+        elif preset=="Cantor-like 1D":
+            pts = cantor_line(np.array([[0,0],[1,0]]), iters)
         else:
             steps = PRESETS_A[preset]
-        gen = make_generator(steps)
-        pts = build_fractal(gen, iters)
+            gen = make_generator(steps)
+            pts = build_fractal(gen, iters)
+            
         fig, ax = plt.subplots(figsize=(6,3))
         ax.plot(pts[:,0], pts[:,1], lw=1.5)
         ax.set_aspect('equal'); ax.axis('off')
