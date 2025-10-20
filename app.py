@@ -116,13 +116,13 @@ if func_choice=="Fractal Generator":
         'Dragon-ish': [(45,1/np.sqrt(2)),(-90,1/np.sqrt(2))],
     }
 
-    if tab_choice=="Fractal Generator":
-        st.sidebar.subheader("Fractal Generator Controls")
-        preset = st.sidebar.selectbox("Preset", list(PRESETS_A.keys())+["Custom 2-step"])
-        iters = st.sidebar.slider("Iterations", 1, 7, 4)
-        angle = st.sidebar.slider("Angle (step 2)", -180.0,180.0,60.0)
-        ratio = st.sidebar.slider("Ratio (step 1)",0.05,0.95,0.333)
-        gen_button = st.sidebar.button("Generate Fractal", key="gen_fractal")
+
+    st.sidebar.subheader("Fractal Generator Controls")
+    preset = st.sidebar.selectbox("Preset", list(PRESETS_A.keys())+["Custom 2-step"])
+    iters = st.sidebar.slider("Iterations", 1, 7, 4)
+    angle = st.sidebar.slider("Angle (step 2)", -180.0,180.0,60.0)
+    ratio = st.sidebar.slider("Ratio (step 1)",0.05,0.95,0.333)
+    gen_button = st.sidebar.button("Generate Fractal", key="gen_fractal")
 
     if 'gen_button' in locals() and gen_button:
         if preset=="Custom 2-step":
@@ -160,13 +160,12 @@ if func_choice=="Fractal Generator":
 elif func_choice=="Multiplicative Cascade":
     st.subheader("Multiplicative Cascades (2x2 or 3x3)")
 
-    if tab_choice=="Multiplicative Cascades":
-        st.sidebar.subheader("Multiplicative Cascade Controls")
-        presetB = st.sidebar.selectbox("Preset B", ["Quad balanced (2x2)","Quad concentrated (2x2)","Nonet balanced (3x3)","Custom"], key="presetB")
-        branch = st.sidebar.selectbox("Branch", [2,3], key="branch")
-        levels = st.sidebar.slider("Levels",4,9,7, key="levels")
-        weights_text = st.sidebar.text_input("Weights (comma-separated)", "0.4,0.3,0.2,0.1", key="weights")
-        cascade_button = st.sidebar.button("Generate Cascade", key="gen_cascade")
+    st.sidebar.subheader("Multiplicative Cascade Controls")
+    presetB = st.sidebar.selectbox("Preset B", ["Quad balanced (2x2)","Quad concentrated (2x2)","Nonet balanced (3x3)","Custom"], key="presetB")
+    branch = st.sidebar.selectbox("Branch", [2,3], key="branch")
+    levels = st.sidebar.slider("Levels",4,9,7, key="levels")
+    weights_text = st.sidebar.text_input("Weights (comma-separated)", "0.4,0.3,0.2,0.1", key="weights")
+    cascade_button = st.sidebar.button("Generate Cascade", key="gen_cascade")
 
     if 'cascade_button' in locals() and cascade_button:
         ws = [float(w) for w in weights_text.split(',') if w.strip()]
@@ -199,13 +198,12 @@ elif func_choice=="Multiplicative Cascade":
 elif func_choice=="Urban Scaling":
     st.subheader("Urban Scaling: multi-indicator fits")
 
-    if tab_choice=="Urban Scaling":
-        st.sidebar.subheader("Urban Scaling Controls")
-        scenario_dd = st.sidebar.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"], key="scenario")
-        noise = st.sidebar.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05, key="noise")
-        M = st.sidebar.slider("Num cities", 60, 400, 120, step=10, key="M")
-        seed = st.sidebar.number_input("Seed", 0, 999, 0, key="seed")
-        scaling_button = st.sidebar.button("Generate Scaling Data", key="gen_scaling")
+    st.sidebar.subheader("Urban Scaling Controls")
+    scenario_dd = st.sidebar.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"], key="scenario")
+    noise = st.sidebar.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05, key="noise")
+    M = st.sidebar.slider("Num cities", 60, 400, 120, step=10, key="M")
+    seed = st.sidebar.number_input("Seed", 0, 999, 0, key="seed")
+    scaling_button = st.sidebar.button("Generate Scaling Data", key="gen_scaling")
 
     SCENARIOS = {
         'Default (sub/≈lin/super)': {'Infrastructure (sublinear)':0.85,'Employment (≈linear)':1.0,'Innovation (superlinear)':1.15},
