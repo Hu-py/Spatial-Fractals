@@ -129,7 +129,7 @@ def box_counting_dimension(grid, ks=[2,4,8,16,32,64]):
 # Streamlit App
 # =============================================================
 st.set_page_config(page_title="Spatial Fractals & Urban Scaling", layout="wide")
-st.title("Spatial Fractals & Urban Scaling Demo")
+st.title("Spatial Fractals & Urban Scaling")
 
 # ---------------- Sidebar: select functionality ----------------
 st.sidebar.subheader("Select Function")
@@ -137,7 +137,7 @@ func_choice = st.sidebar.radio("Function", ["Fractal Generator", "Multiplicative
 
 # ---------------- Fractal Generator Controls ----------------
 if func_choice=="Fractal Generator":
-    st.subheader("Fractal Generator (Initiator & Generator)")
+    #st.subheader("Fractal Generator (Initiator & Generator)")
 
     PRESETS_A = {
         'Koch (classic)': [(0,1/3),(60,1/3),(-120,1/3),(60,1/3)],
@@ -194,7 +194,7 @@ if func_choice=="Fractal Generator":
 # Tab B: Multiplicative Cascades
 # -----------------------------
 elif func_choice=="Multiplicative Cascade":
-    st.subheader("Multiplicative Cascades (2x2 or 3x3)")
+    #st.subheader("Multiplicative Cascades (2x2 or 3x3)")
 
     if "prev_branch" not in st.session_state:
         st.session_state.prev_branch = 2
@@ -255,7 +255,7 @@ elif func_choice=="Multiplicative Cascade":
 # Tab C: Urban Scaling
 # -----------------------------
 elif func_choice == "Urban Scaling":
-    st.subheader("Urban Scaling: multi-indicator fits")
+    #st.subheader("Urban Scaling: multi-indicator fits")
 
     st.sidebar.subheader("Urban Scaling Controls")
     scenario_dd = st.sidebar.selectbox(
