@@ -101,10 +101,15 @@ def box_counting_dimension(grid, ks=[2,4,8,16,32,64]):
 # =============================================================
 # Streamlit App
 # =============================================================
+
 st.set_page_config(page_title="Spatial Fractals & Urban Scaling", layout="wide")
 st.title("Spatial Fractals & Urban Scaling Demo")
 
 tabA, tabB, tabC = st.tabs(["A: Initiator-Generator", "B: Multiplicative Cascades", "C: Urban Scaling"])
+
+# -------- Sidebar 动态控件 --------
+# 先在 sidebar 放一个占位 container
+sidebar_container = st.sidebar.container()
 
 # =============================================================
 # === A: Fractal Generator ===
@@ -119,12 +124,14 @@ with tabA:
         'Dragon-ish': [(45,1/np.sqrt(2)),(-90,1/np.sqrt(2))],
     }
 
-    # sidebar 控件
-    preset = st.sidebar.selectbox("Preset", list(PRESETS_A.keys())+["Custom 2-step"])
-    iters = st.sidebar.slider("Iterations", 1, 7, 4)
-    angle = st.sidebar.slider("Angle (step 2)", -180.0,180.0,60.0)
-    ratio = st.sidebar.slider("Ratio (step 1)",0.05,0.95,0.333)
-    gen_button = st.sidebar.button("Generate Fractal")
+    # 在 container 里生成 tabA 的 sidebar 控件
+    with sidebar_container:
+        st.subheader("Fractal Generator Controls")
+        preset = st.selectbox("Preset", list(PRESETS_A.keys())+["Custom 2-step"])
+        iters = st.slider("Iterations", 1, 7, 4)
+        angle = st.slider("Angle (step 2)", -180.0,180.0,60.0)
+        ratio = st.slider("Ratio (step 1)",0.05,0.95,0.333)
+        gen_button = st.button("Generate Fractal", key="gen_fractal")
 
     if gen_button:
         if preset=="Custom 2-step":
@@ -148,7 +155,6 @@ with tabA:
         st.write(f"Similarity dimension (theory): {D_sim:.4f}")
         st.write(f"Box-counting dimension (empirical): {D_box:.4f}")
 
-        # scaling plot
         fig2, ax2 = plt.subplots(figsize=(4,3))
         ax2.scatter(x,y)
         A = np.vstack([x,np.ones_like(x)]).T
@@ -163,12 +169,14 @@ with tabA:
 with tabB:
     st.subheader("Multiplicative Cascades (2x2 or 3x3)")
 
-    # sidebar 控件
-    presetB = st.sidebar.selectbox("Preset B", ["Quad balanced (2x2)","Quad concentrated (2x2)","Nonet balanced (3x3)","Custom"])
-    branch = st.sidebar.selectbox("Branch", [2,3])
-    levels = st.sidebar.slider("Levels",4,9,7)
-    weights_text = st.sidebar.text_input("Weights (comma-separated)", "0.4,0.3,0.2,0.1")
-    cascade_button = st.sidebar.button("Generate Cascade")
+    # 动态 sidebar
+    with sidebar_container:
+        st.subheader("Multiplicative Cascade Controls")
+        presetB = st.selectbox("Preset B", ["Quad balanced (2x2)","Quad concentrated (2x2)","Nonet balanced (3x3)","Custom"], key="presetB")
+        branch = st.selectbox("Branch", [2,3], key="branch")
+        levels = st.slider("Levels",4,9,7, key="levels")
+        weights_text = st.text_input("Weights (comma-separated)", "0.4,0.3,0.2,0.1", key="weights")
+        cascade_button = st.button("Generate Cascade", key="gen_cascade")
 
     if cascade_button:
         ws = [float(w) for w in weights_text.split(',') if w.strip()]
@@ -201,58 +209,70 @@ with tabB:
 with tabC:
     st.subheader("Urban Scaling: multi-indicator fits")
 
-    # sidebar 控件
-    scenario_dd = st.sidebar.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"])
-    noise = st.sidebar.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05)
-    M = st.sidebar.slider("Num cities", 60, 400, 120, step=10)
-    seed = st.sidebar.number_input("Seed", 0, 999, 0)
-    scaling_button = st.sidebar.button("Generate Scaling Data")
+    # 动态 sidebar
+    with sidebar_container:
+        st.subheader("Urban Scaling Controls")
+        scenario_dd = st.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"], key="scenario")
+        noise = st.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05, key="noise")
+        M = st.slider("Num cities", 60, 400, 120, step=10, key="M")
+        seed = st.number_input("Seed", 0, 999, 0, key="seed")
+        scaling_button = st.button("Generate Scaling Data", key="gen_scaling")
 
-    SCENARIOS = {
-        'Default (sub/≈lin/super)': {'Infrastructure (sublinear)':0.85,'Employment (≈linear)':1.0,'Innovation (superlinear)':1.15},
-        'All sublinear': {'Road length':0.85,'Electric network':0.88,'Water pipes':0.83},
-        'All superlinear': {'Patents':1.15,'Creative jobs':1.20,'High-tech firms':1.12},
-    }
+    sidebar_container = st.sidebar.container()
 
-    if scaling_button:
-        betas_true = SCENARIOS[scenario_dd]
-        rng = np.random.default_rng(seed)
-        pop = rng.lognormal(mean=11.0, sigma=0.8, size=M)
-        mat = {}
-        Y0 = {name:0.5 for name in betas_true}
-        for name,beta in betas_true.items():
-            noise_vals = rng.lognormal(mean=0.0, sigma=noise, size=M)
-            mat[name] = Y0[name]*(pop**beta)*noise_vals
-        df = pd.DataFrame({'Population':pop,**mat})
+with sidebar_container:
+    st.subheader("Urban Scaling Controls")
+    scenario_dd = st.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"])
+    noise = st.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05)
+    M = st.slider("Num cities", 60, 400, 120, step=10)
+    seed = st.number_input("Seed", 0, 999, 0)
+    scaling_button = st.button("Generate Scaling Data")
 
-        # Fit OLS
-        x = np.log(df['Population'].values)
-        X = sm.add_constant(x)
-        results = {}
-        for col in df.columns:
-            if col=='Population': continue
-            y = np.log(df[col].values)
-            model = sm.OLS(y,X).fit()
-            results[col]=model
+SCENARIOS = {
+    'Default (sub/≈lin/super)': {'Infrastructure (sublinear)':0.85,'Employment (≈linear)':1.0,'Innovation (superlinear)':1.15},
+    'All sublinear': {'Road length':0.85,'Electric network':0.88,'Water pipes':0.83},
+    'All superlinear': {'Patents':1.15,'Creative jobs':1.20,'High-tech firms':1.12},
+}
 
-        # Display table
-        rows=[]
-        for name,beta in betas_true.items():
-            m = results[name]
-            ci_low, ci_high = m.conf_int().iloc[1]
-            rows.append([name,beta,m.params[1],ci_low,ci_high,m.rsquared])
-        st.dataframe(pd.DataFrame(rows,columns=['Indicator','β true','β_hat','CI low','CI high','R²']))
+if scaling_button:
+    betas_true = SCENARIOS[scenario_dd]
+    rng = np.random.default_rng(seed)
+    pop = rng.lognormal(mean=11.0, sigma=0.8, size=M)
+    mat = {}
+    Y0 = {name:0.5 for name in betas_true}
+    for name,beta in betas_true.items():
+        noise_vals = rng.lognormal(mean=0.0, sigma=noise, size=M)
+        mat[name] = Y0[name]*(pop**beta)*noise_vals
+    df = pd.DataFrame({'Population':pop,**mat})
 
-        # Plot
-        cols = [c for c in df.columns if c!='Population']
-        fig, axes = plt.subplots(1,len(cols),figsize=(5*len(cols),4))
-        if len(cols)==1: axes=[axes]
-        for ax,col in zip(axes,cols):
-            y = np.log(df[col].values)
-            m = results[col]
-            ax.scatter(x,y,alpha=0.6)
-            xx = np.linspace(x.min(),x.max(),200)
-            ax.plot(xx, m.params[0]+m.params[1]*xx,'--')
-            ax.set_title(f"{col}\nβ_hat={m.params[1]:.3f} (95% CI {m.conf_int().iloc[1,0]:.3f}-{m.conf_int().iloc[1,1]:.3f})\nR²={m.rsquared:.2f}")
-            ax.set_xlabel('log Population'); ax.set_ylabel(f'log {col}')
-        st.pyplot(fig)
+    # Fit OLS
+    x = np.log(df['Population'].values)
+    X = sm.add_constant(x)
+    results = {}
+    for col in df.columns:
+        if col=='Population': continue
+        y = np.log(df[col].values)
+        model = sm.OLS(y,X).fit()
+        results[col]=model
+
+    # Display table
+    rows=[]
+    for name,beta in betas_true.items():
+        m = results[name]
+        ci_low, ci_high = m.conf_int().iloc[1]
+        rows.append([name,beta,m.params[1],ci_low,ci_high,m.rsquared])
+    st.dataframe(pd.DataFrame(rows,columns=['Indicator','β true','β_hat','CI low','CI high','R²']))
+
+    # Plot
+    cols = [c for c in df.columns if c!='Population']
+    fig, axes = plt.subplots(1,len(cols),figsize=(5*len(cols),4))
+    if len(cols)==1: axes=[axes]
+    for ax,col in zip(axes,cols):
+        y = np.log(df[col].values)
+        m = results[col]
+        ax.scatter(x,y,alpha=0.6)
+        xx = np.linspace(x.min(),x.max(),200)
+        ax.plot(xx, m.params[0]+m.params[1]*xx,'--')
+        ax.set_title(f"{col}\nβ_hat={m.params[1]:.3f} (95% CI {m.conf_int().iloc[1,0]:.3f}-{m.conf_int().iloc[1,1]:.3f})\nR²={m.rsquared:.2f}")
+        ax.set_xlabel('log Population'); ax.set_ylabel(f'log {col}')
+    st.pyplot(fig)
