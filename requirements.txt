@@ -3,4 +3,5 @@ numpy>=1.26.0
 pandas>=2.1.0
 matplotlib>=3.7.0
 scipy>=1.11.0
-statsmodels>=1.1.0
+statsmodels>=0.13.5
+
