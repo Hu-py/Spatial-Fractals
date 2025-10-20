@@ -205,8 +205,14 @@ elif func_choice=="Multiplicative Cascade":
         default_weights = "0.4,0.3,0.2,0.1"  # 2×2 共4个
     elif branch == 3:
         default_weights = "0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1"  # 3×3 共9个
+
+    if branch != st.session_state.prev_branch:
+        st.session_state.weights = default_weights
+        st.session_state.prev_branch = branch
+        
     levels = st.sidebar.slider("Levels",4,9,7, key="levels")
-    weights_text = st.sidebar.text_input("Weights (comma-separated)", default_weights, key="weights")
+    weights_text = st.sidebar.text_input("Weights (comma-separated)", key="weights")
+
     cascade_button = st.sidebar.button("Generate Cascade", key="gen_cascade")
 
     if 'cascade_button' in locals() and cascade_button:
