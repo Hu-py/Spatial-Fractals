@@ -196,6 +196,36 @@ if func_choice=="Fractal Generator":
 elif func_choice=="Multiplicative Cascade":
     st.subheader("Multiplicative Cascades (2x2 or 3x3)")
 
+    if "prev_branch" not in st.session_state:
+        st.session_state.prev_branch = 2
+    if "weights" not in st.session_state:
+        st.session_state.weights = "0.4,0.3,0.2,0.1"  # 默认 2×2
+    
+    # ---- 控件 ----
+    presetB = st.sidebar.selectbox(
+        "Preset B",
+        ["Quad balanced (2x2)", "Quad concentrated (2x2)", "Nonet balanced (3x3)", "Custom"],
+        key="presetB"
+    )
+    branch = st.sidebar.selectbox("Branch", [2, 3], key="branch")
+    
+    # ---- 根据 branch 动态设定默认权重 ----
+    if branch == 2:
+        default_weights = "0.4,0.3,0.2,0.1"  # 2×2 共4个
+    elif branch == 3:
+        default_weights = "0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1"  # 3×3 共9个
+    
+    # ---- 检测是否切换 branch，如果是则自动更新输入框内容 ----
+    if branch != st.session_state.prev_branch:
+        st.session_state.weights = default_weights
+        st.session_state.prev_branch = branch
+    
+    # ---- 仍然提供可编辑输入框 ----
+    levels = st.sidebar.slider("Levels", 4, 9, 7, key="levels")
+    weights_text = st.sidebar.text_input("Weights (comma-separated)", key="weights")
+    
+    cascade_button = st.sidebar.button("Generate Cascade", key="gen_cascade")
+
     st.sidebar.subheader("Multiplicative Cascade Controls")
     presetB = st.sidebar.selectbox("Preset B", ["Quad balanced (2x2)","Quad concentrated (2x2)","Nonet balanced (3x3)","Custom"], key="presetB")
     branch = st.sidebar.selectbox("Branch", [2, 3], key="branch")
