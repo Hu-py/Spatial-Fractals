@@ -119,12 +119,14 @@ with tabA:
         'Dragon-ish': [(45,1/np.sqrt(2)),(-90,1/np.sqrt(2))],
     }
 
-    preset = st.selectbox("Preset", list(PRESETS_A.keys())+["Custom 2-step"])
-    iters = st.slider("Iterations", 1, 7, 4)
-    angle = st.slider("Angle (step 2)", -180.0,180.0,60.0)
-    ratio = st.slider("Ratio (step 1)",0.05,0.95,0.333)
+    # sidebar 控件
+    preset = st.sidebar.selectbox("Preset", list(PRESETS_A.keys())+["Custom 2-step"])
+    iters = st.sidebar.slider("Iterations", 1, 7, 4)
+    angle = st.sidebar.slider("Angle (step 2)", -180.0,180.0,60.0)
+    ratio = st.sidebar.slider("Ratio (step 1)",0.05,0.95,0.333)
+    gen_button = st.sidebar.button("Generate Fractal")
 
-    if st.button("Generate Fractal"):
+    if gen_button:
         if preset=="Custom 2-step":
             steps = [(0.0, ratio), (angle, 1.0-ratio)]
         else:
@@ -160,12 +162,15 @@ with tabA:
 # =============================================================
 with tabB:
     st.subheader("Multiplicative Cascades (2x2 or 3x3)")
-    presetB = st.selectbox("Preset B", ["Quad balanced (2x2)","Quad concentrated (2x2)","Nonet balanced (3x3)","Custom"])
-    branch = st.selectbox("Branch", [2,3])
-    levels = st.slider("Levels",4,9,7)
-    weights_text = st.text_input("Weights (comma-separated)", "0.4,0.3,0.2,0.1")
 
-    if st.button("Generate Cascade"):
+    # sidebar 控件
+    presetB = st.sidebar.selectbox("Preset B", ["Quad balanced (2x2)","Quad concentrated (2x2)","Nonet balanced (3x3)","Custom"])
+    branch = st.sidebar.selectbox("Branch", [2,3])
+    levels = st.sidebar.slider("Levels",4,9,7)
+    weights_text = st.sidebar.text_input("Weights (comma-separated)", "0.4,0.3,0.2,0.1")
+    cascade_button = st.sidebar.button("Generate Cascade")
+
+    if cascade_button:
         ws = [float(w) for w in weights_text.split(',') if w.strip()]
         grid = np.ones((1,1))
         np.random.seed(1)
@@ -196,10 +201,12 @@ with tabB:
 with tabC:
     st.subheader("Urban Scaling: multi-indicator fits")
 
-    scenario_dd = st.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"])
-    noise = st.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05)
-    M = st.slider("Num cities", 60, 400, 120, step=10)
-    seed = st.number_input("Seed", 0, 999, 0)
+    # sidebar 控件
+    scenario_dd = st.sidebar.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"])
+    noise = st.sidebar.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05)
+    M = st.sidebar.slider("Num cities", 60, 400, 120, step=10)
+    seed = st.sidebar.number_input("Seed", 0, 999, 0)
+    scaling_button = st.sidebar.button("Generate Scaling Data")
 
     SCENARIOS = {
         'Default (sub/≈lin/super)': {'Infrastructure (sublinear)':0.85,'Employment (≈linear)':1.0,'Innovation (superlinear)':1.15},
@@ -207,7 +214,7 @@ with tabC:
         'All superlinear': {'Patents':1.15,'Creative jobs':1.20,'High-tech firms':1.12},
     }
 
-    if st.button("Generate Scaling Data"):
+    if scaling_button:
         betas_true = SCENARIOS[scenario_dd]
         rng = np.random.default_rng(seed)
         pop = rng.lognormal(mean=11.0, sigma=0.8, size=M)
