@@ -254,61 +254,112 @@ elif func_choice=="Multiplicative Cascade":
 # -----------------------------
 # Tab C: Urban Scaling
 # -----------------------------
-elif func_choice=="Urban Scaling":
+elif func_choice == "Urban Scaling":
     st.subheader("Urban Scaling: multi-indicator fits")
 
     st.sidebar.subheader("Urban Scaling Controls")
-    scenario_dd = st.sidebar.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"], key="scenario")
+    scenario_dd = st.sidebar.selectbox(
+        "Scenario",
+        ["Default (sub/≈lin/super)", "All sublinear", "All superlinear"],
+        key="scenario"
+    )
     noise = st.sidebar.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05, key="noise")
     M = st.sidebar.slider("Num cities", 60, 400, 120, step=10, key="M")
     seed = st.sidebar.number_input("Seed", 0, 999, 0, key="seed")
     scaling_button = st.sidebar.button("Generate Scaling Data", key="gen_scaling")
 
     SCENARIOS = {
-        'Default (sub/≈lin/super)': {'Infrastructure (sublinear)':0.85,'Employment (≈linear)':1.0,'Innovation (superlinear)':1.15},
-        'All sublinear': {'Road length':0.85,'Electric network':0.88,'Water pipes':0.83},
-        'All superlinear': {'Patents':1.15,'Creative jobs':1.20,'High-tech firms':1.12},
+        'Default (sub/≈lin/super)': {
+            'Infrastructure (sublinear)': 0.85,
+            'Employment (≈linear)': 1.0,
+            'Innovation (superlinear)': 1.15
+        },
+        'All sublinear': {
+            'Road length': 0.85,
+            'Electric network': 0.88,
+            'Water pipes': 0.83
+        },
+        'All superlinear': {
+            'Patents': 1.15,
+            'Creative jobs': 1.20,
+            'High-tech firms': 1.12
+        },
     }
 
-    if 'scaling_button' in locals() and scaling_button:
+    if scaling_button:
         betas_true = SCENARIOS[scenario_dd]
         rng = np.random.default_rng(seed)
         pop = rng.lognormal(mean=11.0, sigma=0.8, size=M)
         mat = {}
-        Y0 = {name:0.5 for name in betas_true}
-        for name,beta in betas_true.items():
-            noise_vals = rng.lognormal(mean=0.0, sigma=noise, size=M)
-            mat[name] = Y0[name]*(pop**beta)*noise_vals
-        df = pd.DataFrame({'Population':pop,**mat})
+        Y0 = {name: 0.5 for name in betas_true}
 
-        # Fit OLS
+        # --- 生成模拟数据 ---
+        for name, beta in betas_true.items():
+            noise_vals = rng.lognormal(mean=0.0, sigma=noise, size=M)
+            mat[name] = Y0[name] * (pop ** beta) * noise_vals
+        df = pd.DataFrame({'Population': pop, **mat})
+
+        # --- 拟合 OLS ---
         x = np.log(df['Population'].values)
         X = sm.add_constant(x)
         results = {}
+
         for col in df.columns:
-            if col=='Population': continue
+            if col == 'Population':
+                continue
             y = np.log(df[col].values)
-            model = sm.OLS(y,X).fit()
-            results[col]=model
 
-        # Display table
-        rows=[]
-        for name,beta in betas_true.items():
+            # 去掉无效数据点
+            mask = np.isfinite(x) & np.isfinite(y)
+            if mask.sum() < 3:
+                continue
+
+            try:
+                model = sm.OLS(y[mask], X[mask]).fit()
+                results[col] = model
+            except Exception as e:
+                st.warning(f"⚠️ Failed to fit {col}: {e}")
+
+        # --- 汇总结果表 ---
+        rows = []
+        for name, beta in betas_true.items():
+            if name not in results:
+                rows.append([name, beta, np.nan, np.nan, np.nan, np.nan])
+                continue
+
             m = results[name]
-            ci_low, ci_high = m.conf_int().iloc[1]
-            rows.append([name,beta,m.params[1],ci_low,ci_high,m.rsquared])
-        st.dataframe(pd.DataFrame(rows,columns=['Indicator','β true','β_hat','CI low','CI high','R²']))
+            ci = m.conf_int()
+            if len(ci) > 1:
+                ci_low, ci_high = ci.iloc[1]
+                beta_hat = m.params[1]
+            else:
+                ci_low = ci_high = np.nan
+                beta_hat = np.nan
 
-        # Plot
-        cols = [c for c in df.columns if c!='Population']
-        fig, axes = plt.subplots(1,len(cols),figsize=(5*len(cols),4))
-        if len(cols)==1: axes=[axes]
-        for ax,col in zip(axes,cols):
+            rows.append([name, beta, beta_hat, ci_low, ci_high, m.rsquared])
+
+        table = pd.DataFrame(rows, columns=['Indicator', 'β true', 'β_hat', 'CI low', 'CI high', 'R²'])
+        st.dataframe(table, use_container_width=True)
+
+        # --- 绘图 ---
+        cols = [c for c in df.columns if c != 'Population']
+        fig, axes = plt.subplots(1, len(cols), figsize=(5 * len(cols), 4))
+        if len(cols) == 1:
+            axes = [axes]
+
+        for ax, col in zip(axes, cols):
             y = np.log(df[col].values)
-            m = results[col]
-            ax.scatter(x,y,alpha=0.6)
-            xx = np.linspace(x.min(),x.max(),200)
-            ax.plot(xx, m.params[0]+m.params[1]*xx,'--')
-            ax.set_title(f"{col}\nβ_hat={m.params[1]:.3f} (95% CI {m.conf_int().iloc[1,0]:.3f}-{m.conf_int().iloc[1,1]:.3f})\nR²={m.rsquared:.2f}")
-            ax.set_xlabel('log Population'); ax.set_ylabel(f'log {col}')
+            m = results.get(col, None)
+            ax.scatter(x, y, alpha=0.6, s=20)
+            if m is not None and len(m.params) > 1:
+                xx = np.linspace(x.min(), x.max(), 200)
+                ax.plot(xx, m.params[0] + m.params[1] * xx, '--', lw=2)
+                ci_text = f"{m.conf_int().iloc[1, 0]:.3f}-{m.conf_int().iloc[1, 1]:.3f}" if len(m.conf_int()) > 1 else "N/A"
+                ax.set_title(f"{col}\nβ̂={m.params[1]:.3f} (95% CI {ci_text})\nR²={m.rsquared:.2f}")
+            else:
+                ax.set_title(f"{col}\nModel failed")
+
+            ax.set_xlabel('log Population')
+            ax.set_ylabel(f'log {col}')
+
         st.pyplot(fig)
