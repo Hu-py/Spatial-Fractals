@@ -77,29 +77,33 @@ def rasterize_polyline(pts,R=512):
     return grid
     
 # ----------- 新增 Cantor-like 1D 生成函数 -----------
-def cantor_line(points, iterations):
+def cantor_line(pts, iterations, scale_y=0.3):
     """
-    points: np.array([[x0,y0],[x1,y1]])
-    iterations: int, 迭代次数
-    返回: np.array of points
+    pts: np.array([[x0,y0],[x1,y1]])
+    iterations: 迭代次数
+    scale_y: 每次折线垂直高度比例
     """
-    segs = [points]
     for _ in range(iterations):
-        new_segs = []
-        for seg in segs:
-            x0, y0 = seg[0]
-            x1, y1 = seg[1]
-            dx = (x1 - x0)/3
-            # 左端段
-            new_segs.append(np.array([[x0, y0], [x0+dx, y0]]))
-            # 右端段
-            new_segs.append(np.array([[x0+2*dx, y0], [x1, y1]]))
-        segs = new_segs
-    # 合并所有点
-    pts = [segs[0][0]]
-    for seg in segs:
-        pts.append(seg[1])
-    return np.array(pts)
+        new_pts = []
+        for i in range(len(pts)-1):
+            x0, y0 = pts[i]
+            x1, y1 = pts[i+1]
+            dx = x1 - x0
+            dy = y1 - y0
+            # 分成三段：左，中，右
+            x_a = x0 + dx/3
+            x_b = x0 + 2*dx/3
+            # 左段
+            new_pts.append([x0, y0])
+            new_pts.append([x_a, y0])
+            # 中段折线向上
+            new_pts.append([x_a + dx/6, y0 + dx*scale_y])
+            new_pts.append([x_b, y0])
+            # 右段
+            new_pts.append([x1, y1])
+        pts = np.array(new_pts)
+    return pts
+
 
 
 def box_counting_dimension(grid, ks=[2,4,8,16,32,64]):
