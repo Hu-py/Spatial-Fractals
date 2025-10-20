@@ -105,18 +105,14 @@ def box_counting_dimension(grid, ks=[2,4,8,16,32,64]):
 st.set_page_config(page_title="Spatial Fractals & Urban Scaling", layout="wide")
 st.title("Spatial Fractals & Urban Scaling Demo")
 
-tabA, tabB, tabC = st.tabs(["A: Initiator-Generator", "B: Multiplicative Cascades", "C: Urban Scaling"])
-
 # -------- Sidebar 动态控件 --------
-# 先在 sidebar 放一个占位 container
-sidebar_container = st.sidebar.container()
+tab_choice = st.sidebar.radio("Select Module", ["Fractal Generator","Multiplicative Cascade","Urban Scaling"])
 
 # =============================================================
 # === A: Fractal Generator ===
 # =============================================================
 with tabA:
     st.subheader("Fractal Generator (Initiator & Generator)")
-
     PRESETS_A = {
         'Koch (classic)': [(0,1/3),(60,1/3),(-120,1/3),(60,1/3)],
         'V (acute)': [(0,0.5),(60,0.5)],
@@ -124,44 +120,43 @@ with tabA:
         'Dragon-ish': [(45,1/np.sqrt(2)),(-90,1/np.sqrt(2))],
     }
 
-    # 在 container 里生成 tabA 的 sidebar 控件
-    with sidebar_container:
-        st.subheader("Fractal Generator Controls")
-        preset = st.selectbox("Preset", list(PRESETS_A.keys())+["Custom 2-step"])
-        iters = st.slider("Iterations", 1, 7, 4)
-        angle = st.slider("Angle (step 2)", -180.0,180.0,60.0)
-        ratio = st.slider("Ratio (step 1)",0.05,0.95,0.333)
-        gen_button = st.button("Generate Fractal", key="gen_fractal")
+    if tab_choice=="Fractal Generator":
+        st.sidebar.subheader("Fractal Generator Controls")
+        preset = st.sidebar.selectbox("Preset", list(PRESETS_A.keys())+["Custom 2-step"])
+        iters = st.sidebar.slider("Iterations", 1, 7, 4)
+        angle = st.sidebar.slider("Angle (step 2)", -180.0,180.0,60.0)
+        ratio = st.sidebar.slider("Ratio (step 1)",0.05,0.95,0.333)
+        gen_button = st.sidebar.button("Generate Fractal")
 
-    if gen_button:
-        if preset=="Custom 2-step":
-            steps = [(0.0, ratio), (angle, 1.0-ratio)]
-        else:
-            steps = PRESETS_A[preset]
-        gen = make_generator(steps)
-        pts = build_fractal(gen, iters)
-        fig, ax = plt.subplots(figsize=(6,3))
-        ax.plot(pts[:,0], pts[:,1], lw=1.5)
-        ax.set_aspect('equal'); ax.axis('off')
-        st.pyplot(fig)
+        if gen_button:
+            if preset=="Custom 2-step":
+                steps = [(0.0, ratio), (angle, 1.0-ratio)]
+            else:
+                steps = PRESETS_A[preset]
+            gen = make_generator(steps)
+            pts = build_fractal(gen, iters)
+            fig, ax = plt.subplots(figsize=(6,3))
+            ax.plot(pts[:,0], pts[:,1], lw=1.5)
+            ax.set_aspect('equal'); ax.axis('off')
+            st.pyplot(fig)
 
-        ratios = [s.ratio for s in gen]
-        try:
-            D_sim = similarity_dimension(ratios)
-        except:
-            D_sim = np.nan
-        grid = rasterize_polyline(pts,R=512)
-        D_box, (x,y) = box_counting_dimension(grid)
-        st.write(f"Similarity dimension (theory): {D_sim:.4f}")
-        st.write(f"Box-counting dimension (empirical): {D_box:.4f}")
+            ratios = [s.ratio for s in gen]
+            try:
+                D_sim = similarity_dimension(ratios)
+            except:
+                D_sim = np.nan
+            grid = rasterize_polyline(pts,R=512)
+            D_box, (x,y) = box_counting_dimension(grid)
+            st.write(f"Similarity dimension (theory): {D_sim:.4f}")
+            st.write(f"Box-counting dimension (empirical): {D_box:.4f}")
 
-        fig2, ax2 = plt.subplots(figsize=(4,3))
-        ax2.scatter(x,y)
-        A = np.vstack([x,np.ones_like(x)]).T
-        D_hat, c = np.linalg.lstsq(A,y,rcond=None)[0]
-        ax2.plot(x, D_hat*x+c, '--')
-        ax2.set_xlabel('log(1/ε)'); ax2.set_ylabel('log N(ε)')
-        st.pyplot(fig2)
+            fig2, ax2 = plt.subplots(figsize=(4,3))
+            ax2.scatter(x,y)
+            A = np.vstack([x,np.ones_like(x)]).T
+            D_hat, c = np.linalg.lstsq(A,y,rcond=None)[0]
+            ax2.plot(x, D_hat*x+c, '--')
+            ax2.set_xlabel('log(1/ε)'); ax2.set_ylabel('log N(ε)')
+            st.pyplot(fig2)
 
 # =============================================================
 # === B: Multiplicative Cascades ===
@@ -169,39 +164,38 @@ with tabA:
 with tabB:
     st.subheader("Multiplicative Cascades (2x2 or 3x3)")
 
-    # 动态 sidebar
-    with sidebar_container:
-        st.subheader("Multiplicative Cascade Controls")
-        presetB = st.selectbox("Preset B", ["Quad balanced (2x2)","Quad concentrated (2x2)","Nonet balanced (3x3)","Custom"], key="presetB")
-        branch = st.selectbox("Branch", [2,3], key="branch")
-        levels = st.slider("Levels",4,9,7, key="levels")
-        weights_text = st.text_input("Weights (comma-separated)", "0.4,0.3,0.2,0.1", key="weights")
-        cascade_button = st.button("Generate Cascade", key="gen_cascade")
+    if tab_choice=="Multiplicative Cascade":
+        st.sidebar.subheader("Multiplicative Cascade Controls")
+        presetB = st.sidebar.selectbox("Preset B", ["Quad balanced (2x2)","Quad concentrated (2x2)","Nonet balanced (3x3)","Custom"])
+        branch = st.sidebar.selectbox("Branch", [2,3])
+        levels = st.sidebar.slider("Levels",4,9,7)
+        weights_text = st.sidebar.text_input("Weights (comma-separated)", "0.4,0.3,0.2,0.1")
+        cascade_button = st.sidebar.button("Generate Cascade")
 
-    if cascade_button:
-        ws = [float(w) for w in weights_text.split(',') if w.strip()]
-        grid = np.ones((1,1))
-        np.random.seed(1)
-        for _ in range(levels):
-            h,w0 = grid.shape
-            new = np.zeros((h*branch, w0*branch))
-            for i in range(h):
-                for j in range(w0):
-                    ws_perm = np.random.permutation(ws)
-                    idx=0
-                    for bi in range(branch):
-                        for bj in range(branch):
-                            new[branch*i+bi, branch*j+bj] = grid[i,j]*ws_perm[idx]
-                            idx+=1
-            grid=new
-        grid = grid/grid.sum()
-        if grid.shape[0]>256:
-            grid=grid[:256,:256]
-        fig, ax = plt.subplots(figsize=(5,5))
-        ax.imshow(grid, origin='lower', cmap='magma')
-        ax.axis('off')
-        ax.set_title(f"Cascade {branch}x{branch}, levels={levels}")
-        st.pyplot(fig)
+        if cascade_button:
+            ws = [float(w) for w in weights_text.split(',') if w.strip()]
+            grid = np.ones((1,1))
+            np.random.seed(1)
+            for _ in range(levels):
+                h,w0 = grid.shape
+                new = np.zeros((h*branch, w0*branch))
+                for i in range(h):
+                    for j in range(w0):
+                        ws_perm = np.random.permutation(ws)
+                        idx=0
+                        for bi in range(branch):
+                            for bj in range(branch):
+                                new[branch*i+bi, branch*j+bj] = grid[i,j]*ws_perm[idx]
+                                idx+=1
+                grid=new
+            grid = grid/grid.sum()
+            if grid.shape[0]>256:
+                grid=grid[:256,:256]
+            fig, ax = plt.subplots(figsize=(5,5))
+            ax.imshow(grid, origin='lower', cmap='magma')
+            ax.axis('off')
+            ax.set_title(f"Cascade {branch}x{branch}, levels={levels}")
+            st.pyplot(fig)
 
 # =============================================================
 # === C: Urban Scaling ===
@@ -209,70 +203,60 @@ with tabB:
 with tabC:
     st.subheader("Urban Scaling: multi-indicator fits")
 
-    # 动态 sidebar
-    with sidebar_container:
-        st.subheader("Urban Scaling Controls")
-        scenario_dd = st.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"], key="scenario")
-        noise = st.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05, key="noise")
-        M = st.slider("Num cities", 60, 400, 120, step=10, key="M")
-        seed = st.number_input("Seed", 0, 999, 0, key="seed")
-        scaling_button = st.button("Generate Scaling Data", key="gen_scaling")
+    if tab_choice=="Urban Scaling":
+        st.sidebar.subheader("Urban Scaling Controls")
+        scenario_dd = st.sidebar.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"])
+        noise = st.sidebar.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05)
+        M = st.sidebar.slider("Num cities", 60, 400, 120, step=10)
+        seed = st.sidebar.number_input("Seed", 0, 999, 0)
+        scaling_button = st.sidebar.button("Generate Scaling Data")
 
-    sidebar_container = st.sidebar.container()
+        SCENARIOS = {
+            'Default (sub/≈lin/super)': {'Infrastructure (sublinear)':0.85,'Employment (≈linear)':1.0,'Innovation (superlinear)':1.15},
+            'All sublinear': {'Road length':0.85,'Electric network':0.88,'Water pipes':0.83},
+            'All superlinear': {'Patents':1.15,'Creative jobs':1.20,'High-tech firms':1.12},
+        }
 
-with sidebar_container:
-    st.subheader("Urban Scaling Controls")
-    scenario_dd = st.selectbox("Scenario", ["Default (sub/≈lin/super)","All sublinear","All superlinear"])
-    noise = st.slider("Noise σ", 0.0, 0.6, 0.2, step=0.05)
-    M = st.slider("Num cities", 60, 400, 120, step=10)
-    seed = st.number_input("Seed", 0, 999, 0)
-    scaling_button = st.button("Generate Scaling Data")
+        if scaling_button:
+            betas_true = SCENARIOS[scenario_dd]
+            rng = np.random.default_rng(seed)
+            pop = rng.lognormal(mean=11.0, sigma=0.8, size=M)
+            mat = {}
+            Y0 = {name:0.5 for name in betas_true}
+            for name,beta in betas_true.items():
+                noise_vals = rng.lognormal(mean=0.0, sigma=noise, size=M)
+                mat[name] = Y0[name]*(pop**beta)*noise_vals
+            df = pd.DataFrame({'Population':pop,**mat})
 
-SCENARIOS = {
-    'Default (sub/≈lin/super)': {'Infrastructure (sublinear)':0.85,'Employment (≈linear)':1.0,'Innovation (superlinear)':1.15},
-    'All sublinear': {'Road length':0.85,'Electric network':0.88,'Water pipes':0.83},
-    'All superlinear': {'Patents':1.15,'Creative jobs':1.20,'High-tech firms':1.12},
-}
+            # Fit OLS
+            x = np.log(df['Population'].values)
+            X = sm.add_constant(x)
+            results = {}
+            for col in df.columns:
+                if col=='Population': continue
+                y = np.log(df[col].values)
+                model = sm.OLS(y,X).fit()
+                results[col]=model
 
-if scaling_button:
-    betas_true = SCENARIOS[scenario_dd]
-    rng = np.random.default_rng(seed)
-    pop = rng.lognormal(mean=11.0, sigma=0.8, size=M)
-    mat = {}
-    Y0 = {name:0.5 for name in betas_true}
-    for name,beta in betas_true.items():
-        noise_vals = rng.lognormal(mean=0.0, sigma=noise, size=M)
-        mat[name] = Y0[name]*(pop**beta)*noise_vals
-    df = pd.DataFrame({'Population':pop,**mat})
+            # Display table
+            rows=[]
+            for name,beta in betas_true.items():
+                m = results[name]
+                ci_low, ci_high = m.conf_int().iloc[1]
+                rows.append([name,beta,m.params[1],ci_low,ci_high,m.rsquared])
+            st.dataframe(pd.DataFrame(rows,columns=['Indicator','β true','β_hat','CI low','CI high','R²']))
 
-    # Fit OLS
-    x = np.log(df['Population'].values)
-    X = sm.add_constant(x)
-    results = {}
-    for col in df.columns:
-        if col=='Population': continue
-        y = np.log(df[col].values)
-        model = sm.OLS(y,X).fit()
-        results[col]=model
+            # Plot
+            cols = [c for c in df.columns if c!='Population']
+            fig, axes = plt.subplots(1,len(cols),figsize=(5*len(cols),4))
+            if len(cols)==1: axes=[axes]
+            for ax,col in zip(axes,cols):
+                y = np.log(df[col].values)
+                m = results[col]
+                ax.scatter(x,y,alpha=0.6)
+                xx = np.linspace(x.min(),x.max(),200)
+                ax.plot(xx, m.params[0]+m.params[1]*xx,'--')
+                ax.set_title(f"{col}\nβ_hat={m.params[1]:.3f} (95% CI {m.conf_int().iloc[1,0]:.3f}-{m.conf_int().iloc[1,1]:.3f})\nR²={m.rsquared:.2f}")
+                ax.set_xlabel('log Population'); ax.set_ylabel(f'log {col}')
+            st.pyplot(fig)
 
-    # Display table
-    rows=[]
-    for name,beta in betas_true.items():
-        m = results[name]
-        ci_low, ci_high = m.conf_int().iloc[1]
-        rows.append([name,beta,m.params[1],ci_low,ci_high,m.rsquared])
-    st.dataframe(pd.DataFrame(rows,columns=['Indicator','β true','β_hat','CI low','CI high','R²']))
-
-    # Plot
-    cols = [c for c in df.columns if c!='Population']
-    fig, axes = plt.subplots(1,len(cols),figsize=(5*len(cols),4))
-    if len(cols)==1: axes=[axes]
-    for ax,col in zip(axes,cols):
-        y = np.log(df[col].values)
-        m = results[col]
-        ax.scatter(x,y,alpha=0.6)
-        xx = np.linspace(x.min(),x.max(),200)
-        ax.plot(xx, m.params[0]+m.params[1]*xx,'--')
-        ax.set_title(f"{col}\nβ_hat={m.params[1]:.3f} (95% CI {m.conf_int().iloc[1,0]:.3f}-{m.conf_int().iloc[1,1]:.3f})\nR²={m.rsquared:.2f}")
-        ax.set_xlabel('log Population'); ax.set_ylabel(f'log {col}')
-    st.pyplot(fig)
