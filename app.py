@@ -293,13 +293,13 @@ elif func_choice == "Urban Scaling":
         mat = {}
         Y0 = {name: 0.5 for name in betas_true}
 
-        # --- 生成模拟数据 ---
+        # 生成模拟数据
         for name, beta in betas_true.items():
             noise_vals = rng.lognormal(mean=0.0, sigma=noise, size=M)
             mat[name] = Y0[name] * (pop ** beta) * noise_vals
         df = pd.DataFrame({'Population': pop, **mat})
 
-        # --- 拟合 OLS ---
+        # 拟合 OLS
         x = np.log(df['Population'].values)
         X = sm.add_constant(x)
         results = {}
@@ -309,7 +309,6 @@ elif func_choice == "Urban Scaling":
                 continue
             y = np.log(df[col].values)
 
-            # 去掉无效数据点
             mask = np.isfinite(x) & np.isfinite(y)
             if mask.sum() < 3:
                 continue
@@ -320,7 +319,7 @@ elif func_choice == "Urban Scaling":
             except Exception as e:
                 st.warning(f"⚠️ Failed to fit {col}: {e}")
 
-        # --- 汇总结果表 ---
+        # 汇总结果表
         rows = []
         for name, beta in betas_true.items():
             if name not in results:
@@ -329,19 +328,22 @@ elif func_choice == "Urban Scaling":
 
             m = results[name]
             ci = m.conf_int()
-            if len(ci) > 1:
-                ci_low, ci_high = ci.iloc[1]
+            try:
+                # ✅ 兼容 ndarray 或 DataFrame
+                if isinstance(ci, np.ndarray):
+                    ci_low, ci_high = ci[1, 0], ci[1, 1]
+                else:
+                    ci_low, ci_high = ci.iloc[1, 0], ci.iloc[1, 1]
                 beta_hat = m.params[1]
-            else:
-                ci_low = ci_high = np.nan
-                beta_hat = np.nan
+            except Exception:
+                ci_low = ci_high = beta_hat = np.nan
 
             rows.append([name, beta, beta_hat, ci_low, ci_high, m.rsquared])
 
         table = pd.DataFrame(rows, columns=['Indicator', 'β true', 'β_hat', 'CI low', 'CI high', 'R²'])
         st.dataframe(table, use_container_width=True)
 
-        # --- 绘图 ---
+        # 绘图
         cols = [c for c in df.columns if c != 'Population']
         fig, axes = plt.subplots(1, len(cols), figsize=(5 * len(cols), 4))
         if len(cols) == 1:
@@ -354,7 +356,11 @@ elif func_choice == "Urban Scaling":
             if m is not None and len(m.params) > 1:
                 xx = np.linspace(x.min(), x.max(), 200)
                 ax.plot(xx, m.params[0] + m.params[1] * xx, '--', lw=2)
-                ci_text = f"{m.conf_int().iloc[1, 0]:.3f}-{m.conf_int().iloc[1, 1]:.3f}" if len(m.conf_int()) > 1 else "N/A"
+                ci = m.conf_int()
+                if isinstance(ci, np.ndarray):
+                    ci_text = f"{ci[1,0]:.3f}-{ci[1,1]:.3f}"
+                else:
+                    ci_text = f"{ci.iloc[1,0]:.3f}-{ci.iloc[1,1]:.3f}"
                 ax.set_title(f"{col}\nβ̂={m.params[1]:.3f} (95% CI {ci_text})\nR²={m.rsquared:.2f}")
             else:
                 ax.set_title(f"{col}\nModel failed")
