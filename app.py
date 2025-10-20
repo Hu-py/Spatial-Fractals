@@ -101,21 +101,12 @@ def box_counting_dimension(grid, ks=[2,4,8,16,32,64]):
 st.set_page_config(page_title="Spatial Fractals & Urban Scaling", layout="wide")
 st.title("Spatial Fractals & Urban Scaling Demo")
 
-# -----------------------------
-# Tabs
-# -----------------------------
-tabA, tabB, tabC = st.tabs(["A: Initiator-Generator", "B: Multiplicative Cascades", "C: Urban Scaling"])
+# ---------------- Sidebar: select functionality ----------------
+st.sidebar.subheader("Select Function")
+func_choice = st.sidebar.radio("Function", ["Fractal Generator", "Multiplicative Cascade", "Urban Scaling"])
 
-# -----------------------------
-# Sidebar: choose which tab to control
-# -----------------------------
-st.sidebar.subheader("Select Tab to Configure")
-tab_choice = st.sidebar.radio("Tab", ["Fractal Generator","Multiplicative Cascades","Urban Scaling"])
-
-# -----------------------------
-# Tab A: Fractal Generator
-# -----------------------------
-with tabA:
+# ---------------- Fractal Generator Controls ----------------
+if func_choice=="Fractal Generator":
     st.subheader("Fractal Generator (Initiator & Generator)")
 
     PRESETS_A = {
@@ -166,7 +157,7 @@ with tabA:
 # -----------------------------
 # Tab B: Multiplicative Cascades
 # -----------------------------
-with tabB:
+elif func_choice=="Multiplicative Cascade":
     st.subheader("Multiplicative Cascades (2x2 or 3x3)")
 
     if tab_choice=="Multiplicative Cascades":
@@ -205,7 +196,7 @@ with tabB:
 # -----------------------------
 # Tab C: Urban Scaling
 # -----------------------------
-with tabC:
+elif func_choice=="Urban Scaling":
     st.subheader("Urban Scaling: multi-indicator fits")
 
     if tab_choice=="Urban Scaling":
