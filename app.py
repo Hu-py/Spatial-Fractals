@@ -226,25 +226,6 @@ elif func_choice=="Multiplicative Cascade":
     
     cascade_button = st.sidebar.button("Generate Cascade", key="gen_cascade")
 
-    st.sidebar.subheader("Multiplicative Cascade Controls")
-    presetB = st.sidebar.selectbox("Preset B", ["Quad balanced (2x2)","Quad concentrated (2x2)","Nonet balanced (3x3)","Custom"], key="presetB")
-    branch = st.sidebar.selectbox("Branch", [2, 3], key="branch")
-
-    # 根据 branch 动态设定默认权重
-    if branch == 2:
-        default_weights = "0.4,0.3,0.2,0.1"  # 2×2 共4个
-    elif branch == 3:
-        default_weights = "0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1"  # 3×3 共9个
-
-    if branch != st.session_state.prev_branch:
-        st.session_state.weights = default_weights
-        st.session_state.prev_branch = branch
-        
-    levels = st.sidebar.slider("Levels",4,9,7, key="levels")
-    weights_text = st.sidebar.text_input("Weights (comma-separated)", key="weights")
-
-    cascade_button = st.sidebar.button("Generate Cascade", key="gen_cascade")
-
     if 'cascade_button' in locals() and cascade_button:
         ws = [float(w) for w in weights_text.split(',') if w.strip()]
         grid = np.ones((1,1))
