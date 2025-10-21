@@ -161,7 +161,7 @@ if func_choice == "Fractal Generator":
 
     # --- 如果不是 Custom，就在主页面显示角度与比例 ---
     if preset != "Custom 2-step":
-        st.markdown("### 📐 预设参数")
+        st.markdown("### 📐Preset Parameters")
         steps = PRESETS_A[preset]
         for i, (ang, r) in enumerate(steps):
             st.markdown(f"- Step {i+1}: Angle = {ang}°, Ratio = {r:.3f}")
