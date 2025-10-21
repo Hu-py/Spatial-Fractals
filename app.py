@@ -161,7 +161,7 @@ if func_choice=="Fractal Generator":
             pts = build_fractal(gen, iters)
         elif preset=="Cantor-like 1D":
             pts = cantor_line(np.array([[0,0],[1,0]]), iters)
-            gen = [Step(0, 1/3)]
+            gen = [Step(0, 1/3), Step(0, 1/3)]  # 两段，模拟左右子段
         else:
             steps = PRESETS_A[preset]
             gen = make_generator(steps)
