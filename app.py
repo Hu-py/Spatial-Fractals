@@ -236,7 +236,7 @@ elif func_choice=="Multiplicative Cascade":
         default_weights_weighted = [0.40, 0.30, 0.20, 0.10]   # 新 Balanced
         default_weights_concentrated = [0.7,0.2,0.05,0.05]
     else:  # branch == 3
-        default_weights_weighted = [0.4,0.3,0.2,0.1,0.05,0.05,0.03,0.02,0.01]
+        default_weights_weighted = [0.25, 0.20, 0.15, 0.12, 0.08, 0.08, 0.06, 0.04, 0.02]
         default_weights_concentrated = [0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1]
 
     # ---- 根据 preset 自动显示权重或启用输入框 ----
