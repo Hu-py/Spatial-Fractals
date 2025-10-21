@@ -270,11 +270,14 @@ elif func_choice=="Multiplicative Cascade":
                             new[branch*i+bi, branch*j+bj] = grid[i,j]*ws_perm[idx]
                             idx+=1
             grid=new
-        grid = grid/grid.sum()
-        if grid.shape[0]>256:
+
+        grid = grid / grid.sum()
+        if grid.shape[0] > 256:
             grid = grid[:256,:256]
+        
         fig, ax = plt.subplots(figsize=(5,5))
-        ax.imshow(grid, origin='lower', cmap='magma')
+        grid_display = grid / grid.max()  # 归一化
+        ax.imshow(grid_display, origin='lower', cmap='magma')
         ax.axis('off')
         ax.set_title(f"Cascade {branch}x{branch}, levels={levels}")
         st.pyplot(fig)
