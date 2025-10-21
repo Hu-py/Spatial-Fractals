@@ -215,38 +215,42 @@ if func_choice == "Fractal Generator":
 elif func_choice=="Multiplicative Cascade":
     st.subheader("Multiplicative Cascades (2x2 or 3x3)")
 
+    # ---- 初始化 session_state ----
     if "prev_branch" not in st.session_state:
         st.session_state.prev_branch = 2
     if "weights" not in st.session_state:
-        st.session_state.weights = "0.25,0.25,0.25,0.25"  # 默认 2×2
-    
+        st.session_state.weights = "0.40,0.30,0.20,0.10"  # 默认 2×2
+
     # ---- 选择 preset ----
     presetB = st.sidebar.selectbox(
         "Preset B",
-        ["Quad balanced (2x2)", "Quad concentrated (2x2)", "Nonet balanced (3x3)", "Custom"],
+        ["Quad weighted (2x2)", "Quad concentrated (2x2)", "Nonet weighted (3x3)", "Custom"],
         key="presetB"
     )
-    
+
     # ---- 选择 branch ----
     branch = st.sidebar.selectbox("Branch", [2, 3], key="branch")
-    
-    # ---- 动态设置默认权重 ----
+
+    # ---- 设置权重 ----
     if branch == 2:
-        default_weights_balanced = [0.25]*4
+        default_weights_weighted = [0.40, 0.30, 0.20, 0.10]   # 新 Balanced
         default_weights_concentrated = [0.7,0.2,0.05,0.05]
     else:  # branch == 3
-        default_weights_balanced = [1/9]*9
+        default_weights_weighted = [0.4,0.3,0.2,0.1,0.05,0.05,0.03,0.02,0.01]
         default_weights_concentrated = [0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1]
-    
+
     # ---- 根据 preset 自动显示权重或启用输入框 ----
-    if presetB == "Quad balanced (2x2)" or presetB == "Nonet balanced (3x3)":
-        ws = default_weights_balanced
+    if presetB in ["Quad weighted (2x2)", "Nonet weighted (3x3)"]:
+        ws = default_weights_weighted
         st.write(f"Preset '{presetB}' weights: {ws}")
-    elif presetB == "Quad concentrated (2x2)" or presetB == "Nonet concentrated (3x3)":
+    elif presetB in ["Quad concentrated (2x2)", "Nonet concentrated (3x3)"]:
         ws = default_weights_concentrated
         st.write(f"Preset '{presetB}' weights: {ws}")
     else:  # Custom
-        weights_text = st.sidebar.text_input("Weights (comma-separated)", st.session_state.weights, key="weights")
+        weights_text = st.sidebar.text_input(
+            "Weights (comma-separated)", 
+            st.session_state.weights, key="weights"
+        )
         ws = [float(w) for w in weights_text.split(',') if w.strip()]
         st.session_state.weights = weights_text
 
@@ -274,9 +278,9 @@ elif func_choice=="Multiplicative Cascade":
         grid = grid / grid.sum()
         if grid.shape[0] > 256:
             grid = grid[:256,:256]
-        
+
         fig, ax = plt.subplots(figsize=(5,5))
-        grid_display = grid / grid.max()  # 归一化
+        grid_display = grid / grid.max()  # 归一化显示
         ax.imshow(grid_display, origin='lower', cmap='magma')
         ax.axis('off')
         ax.set_title(f"Cascade {branch}x{branch}, levels={levels}")
