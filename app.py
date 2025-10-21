@@ -53,7 +53,7 @@ def build_fractal(generator, iterations, initiator=((0.0,0.0),(1.0,0.0))):
     for _ in range(iterations):
         pts = iterate_polyline(pts, generator)
     return pts
-
+    
 def similarity_dimension(ratios):
     ratios = [r for r in ratios if r>0]
     f = lambda D: np.sum(np.power(ratios,D))-1.0
@@ -213,40 +213,49 @@ if func_choice == "Fractal Generator":
 # Tab B: Multiplicative Cascades
 # -----------------------------
 elif func_choice=="Multiplicative Cascade":
-    #st.subheader("Multiplicative Cascades (2x2 or 3x3)")
+    st.subheader("Multiplicative Cascades (2x2 or 3x3)")
 
     if "prev_branch" not in st.session_state:
         st.session_state.prev_branch = 2
     if "weights" not in st.session_state:
-        st.session_state.weights = "0.4,0.3,0.2,0.1"  # 默认 2×2
+        st.session_state.weights = "0.25,0.25,0.25,0.25"  # 默认 2×2
     
-    # ---- 控件 ----
+    # ---- 选择 preset ----
     presetB = st.sidebar.selectbox(
         "Preset B",
         ["Quad balanced (2x2)", "Quad concentrated (2x2)", "Nonet balanced (3x3)", "Custom"],
         key="presetB"
     )
+    
+    # ---- 选择 branch ----
     branch = st.sidebar.selectbox("Branch", [2, 3], key="branch")
     
-    # ---- 根据 branch 动态设定默认权重 ----
+    # ---- 动态设置默认权重 ----
     if branch == 2:
-        default_weights = "0.4,0.3,0.2,0.1"  # 2×2 共4个
-    elif branch == 3:
-        default_weights = "0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1"  # 3×3 共9个
+        default_weights_balanced = [0.25,0.25,0.25,0.25]
+        default_weights_concentrated = [0.7,0.2,0.05,0.05]
+    else:  # branch == 3
+        default_weights_balanced = [1/9]*9
+        default_weights_concentrated = [0.9,0.8,0.7,0.6,0.5,0.4,0.3,0.2,0.1]
     
-    # ---- 检测是否切换 branch，如果是则自动更新输入框内容 ----
-    if branch != st.session_state.prev_branch:
-        st.session_state.weights = default_weights
-        st.session_state.prev_branch = branch
-    
-    # ---- 仍然提供可编辑输入框 ----
+    # ---- 根据 preset 自动显示权重或启用输入框 ----
+    if presetB == "Quad balanced (2x2)" or presetB == "Nonet balanced (3x3)":
+        ws = default_weights_balanced
+        st.write(f"Preset '{presetB}' weights: {ws}")
+    elif presetB == "Quad concentrated (2x2)" or presetB == "Nonet concentrated (3x3)":
+        ws = default_weights_concentrated
+        st.write(f"Preset '{presetB}' weights: {ws}")
+    else:  # Custom
+        weights_text = st.sidebar.text_input("Weights (comma-separated)", st.session_state.weights, key="weights")
+        ws = [float(w) for w in weights_text.split(',') if w.strip()]
+        st.session_state.weights = weights_text
+
+    # ---- Levels ----
     levels = st.sidebar.slider("Levels", 4, 9, 7, key="levels")
-    weights_text = st.sidebar.text_input("Weights (comma-separated)", key="weights")
-    
     cascade_button = st.sidebar.button("Generate Cascade", key="gen_cascade")
 
-    if 'cascade_button' in locals() and cascade_button:
-        ws = [float(w) for w in weights_text.split(',') if w.strip()]
+    # ---- 生成图像 ----
+    if cascade_button:
         grid = np.ones((1,1))
         np.random.seed(1)
         for _ in range(levels):
@@ -263,12 +272,13 @@ elif func_choice=="Multiplicative Cascade":
             grid=new
         grid = grid/grid.sum()
         if grid.shape[0]>256:
-            grid=grid[:256,:256]
+            grid = grid[:256,:256]
         fig, ax = plt.subplots(figsize=(5,5))
         ax.imshow(grid, origin='lower', cmap='magma')
         ax.axis('off')
         ax.set_title(f"Cascade {branch}x{branch}, levels={levels}")
         st.pyplot(fig)
+
 
 # -----------------------------
 # Tab C: Urban Scaling
