@@ -232,7 +232,7 @@ elif func_choice=="Multiplicative Cascade":
     
     # ---- 动态设置默认权重 ----
     if branch == 2:
-        default_weights_balanced = [0.25,0.25,0.25,0.25]
+        default_weights_balanced = ",".join([str(1/branch**2)]*branch**2)
         default_weights_concentrated = [0.7,0.2,0.05,0.05]
     else:  # branch == 3
         default_weights_balanced = [1/9]*9
