@@ -136,60 +136,79 @@ st.sidebar.subheader("Select Function")
 func_choice = st.sidebar.radio("Function", ["Fractal Generator", "Multiplicative Cascade", "Urban Scaling"])
 
 # ---------------- Fractal Generator Controls ----------------
-if func_choice=="Fractal Generator":
-    #st.subheader("Fractal Generator (Initiator & Generator)")
+if func_choice == "Fractal Generator":
+    st.sidebar.subheader("Fractal Generator Controls")
 
     PRESETS_A = {
-        'Koch (classic)': [(0,1/3),(60,1/3),(-120,1/3),(60,1/3)],
-        'V (acute)': [(0,0.5),(60,0.5)],
-        'Cantor-like 1D': [(0,1/3),(0,1/3)],
-        'Dragon-ish': [(45,1/np.sqrt(2)),(-90,1/np.sqrt(2))],
+        'Koch (classic)': [(0, 1/3), (60, 1/3), (-120, 1/3), (60, 1/3)],
+        'V (acute)': [(0, 0.5), (60, 0.5)],
+        'Cantor-like 1D': [(0, 1/3), (0, 1/3)],
+        'Dragon-ish': [(45, 1/np.sqrt(2)), (-90, 1/np.sqrt(2))],
     }
 
-
-    st.sidebar.subheader("Fractal Generator Controls")
-    preset = st.sidebar.selectbox("Preset", list(PRESETS_A.keys())+["Custom 2-step"])
+    preset = st.sidebar.selectbox("Preset", list(PRESETS_A.keys()) + ["Custom 2-step"])
     iters = st.sidebar.slider("Iterations", 1, 7, 4)
-    angle = st.sidebar.slider("Angle (step 2)", -180.0,180.0,60.0)
-    ratio = st.sidebar.slider("Ratio (step 1)",0.05,0.95,0.333)
+
+    # --- 只有 Custom 模式才显示滑块 ---
+    if preset == "Custom 2-step":
+        angle = st.sidebar.slider("Angle (step 2)", -180.0, 180.0, 60.0)
+        ratio = st.sidebar.slider("Ratio (step 1)", 0.05, 0.95, 0.333)
+    else:
+        angle = None
+        ratio = None
+
     gen_button = st.sidebar.button("Generate Fractal", key="gen_fractal")
 
-    if 'gen_button' in locals() and gen_button:
-        if preset=="Custom 2-step":
-            steps = [(0.0, ratio), (angle, 1.0-ratio)]
+    # --- 如果不是 Custom，就在主页面显示角度与比例 ---
+    if preset != "Custom 2-step":
+        st.markdown("### 📐 预设参数")
+        steps = PRESETS_A[preset]
+        for i, (ang, r) in enumerate(steps):
+            st.markdown(f"- Step {i+1}: Angle = {ang}°, Ratio = {r:.3f}")
+
+    # --- 点击按钮生成分形 ---
+    if gen_button:
+        if preset == "Custom 2-step":
+            steps = [(0.0, ratio), (angle, 1.0 - ratio)]
             gen = make_generator(steps)
             pts = build_fractal(gen, iters)
-        elif preset=="Cantor-like 1D":
-            pts = cantor_line(np.array([[0,0],[1,0]]), iters)
-            gen = [Step(0, 1/3), Step(0, 1/3)]  # 两段，模拟左右子段
+        elif preset == "Cantor-like 1D":
+            pts = cantor_line(np.array([[0, 0], [1, 0]]), iters)
+            gen = [Step(0, 1/3), Step(0, 1/3)]
         else:
             steps = PRESETS_A[preset]
             gen = make_generator(steps)
             pts = build_fractal(gen, iters)
-            
-        fig, ax = plt.subplots(figsize=(6,3))
-        ax.plot(pts[:,0], pts[:,1], lw=1.5)
-        ax.set_aspect('equal'); ax.axis('off')
+
+        # --- 绘制 fractal 图像 ---
+        fig, ax = plt.subplots(figsize=(6, 3))
+        ax.plot(pts[:, 0], pts[:, 1], lw=1.5)
+        ax.set_aspect('equal')
+        ax.axis('off')
         st.pyplot(fig)
 
+        # --- 理论与经验维数 ---
         ratios = [s.ratio for s in gen]
         try:
             D_sim = similarity_dimension(ratios)
         except:
             D_sim = np.nan
-        grid = rasterize_polyline(pts,R=512)
-        D_box, (x,y) = box_counting_dimension(grid)
-        st.write(f"Similarity dimension (theory): {D_sim:.4f}")
-        st.write(f"Box-counting dimension (empirical): {D_box:.4f}")
 
-        fig2, ax2 = plt.subplots(figsize=(4,3))
-        ax2.scatter(x,y)
-        A = np.vstack([x,np.ones_like(x)]).T
-        D_hat, c = np.linalg.lstsq(A,y,rcond=None)[0]
-        ax2.plot(x, D_hat*x+c, '--')
-        ax2.set_xlabel('log(1/ε)'); ax2.set_ylabel('log N(ε)')
+        grid = rasterize_polyline(pts, R=512)
+        D_box, (x, y) = box_counting_dimension(grid)
+
+        st.write(f"**Similarity dimension (theory):** {D_sim:.4f}")
+        st.write(f"**Box-counting dimension (empirical):** {D_box:.4f}")
+
+        # --- Box counting 可视化 ---
+        fig2, ax2 = plt.subplots(figsize=(4, 3))
+        ax2.scatter(x, y)
+        A = np.vstack([x, np.ones_like(x)]).T
+        D_hat, c = np.linalg.lstsq(A, y, rcond=None)[0]
+        ax2.plot(x, D_hat * x + c, '--')
+        ax2.set_xlabel('log(1/ε)')
+        ax2.set_ylabel('log N(ε)')
         st.pyplot(fig2)
-
 # -----------------------------
 # Tab B: Multiplicative Cascades
 # -----------------------------
